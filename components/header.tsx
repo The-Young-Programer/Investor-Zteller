@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 
 export function Header() {
@@ -8,10 +9,13 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">Z</span>
-          </div>
-          <span className="font-bold text-lg hidden sm:inline">Zteller</span>
+          <Image 
+            src="/images/zteller-logo.png" 
+            alt="Zteller Logo" 
+            width={120} 
+            height={32} 
+            className="h-8 w-auto"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">

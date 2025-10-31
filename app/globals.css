@@ -5,7 +5,7 @@
 
 :root {
   /* Zteller Brand Colors */
-  --zteller-blue: #0052ff;
+  --zteller-blue: #41aa5e;
   --zteller-green: #00d1a7;
   --light-bg: #f6f9ff;
 
@@ -16,7 +16,7 @@
   --card-foreground: #0f1419;
   --popover: #ffffff;
   --popover-foreground: #0f1419;
-  --primary: #0052ff;
+  --primary: #41aa5e;
   --primary-foreground: #ffffff;
   --secondary: #00d1a7;
   --secondary-foreground: #ffffff;
@@ -28,8 +28,8 @@
   --destructive-foreground: #ffffff;
   --border: #e5e7eb;
   --input: #f3f4f6;
-  --ring: #0052ff;
-  --chart-1: #0052ff;
+  --ring: #41aa5e;
+  --chart-1: #41aa5e;
   --chart-2: #00d1a7;
   --chart-3: #3b82f6;
   --chart-4: #10b981;
@@ -52,7 +52,7 @@
   --card-foreground: #f3f4f6;
   --popover: #1a1f2e;
   --popover-foreground: #f3f4f6;
-  --primary: #0052ff;
+  --primary: #41aa5e;
   --primary-foreground: #ffffff;
   --secondary: #00d1a7;
   --secondary-foreground: #ffffff;
@@ -64,7 +64,7 @@
   --destructive-foreground: #0f1419;
   --border: #2d3748;
   --input: #1a1f2e;
-  --ring: #0052ff;
+  --ring: #41aa5e;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -152,7 +152,7 @@
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, #0052ff 0%, #00d1a7 100%);
+    background: linear-gradient(135deg, #41aa5e 0%, #00d1a7 100%);
   }
 
   /* Added custom animations for fade-in effects */

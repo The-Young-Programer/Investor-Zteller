@@ -17,7 +17,7 @@ export function WhyInvestSection() {
               <div>
                 <h3 className="text-xl font-bold mb-2">Strong Market Traction</h3>
                 <p className="text-muted-foreground">
-                  Zteller is experiencing rapid adoption across student associations with month-over-month growth
+                  Zteller is experiencing rapid adoption across different Universities with month over month growth
                   exceeding 40%.
                 </p>
               </div>
@@ -32,7 +32,7 @@ export function WhyInvestSection() {
               <div>
                 <h3 className="text-xl font-bold mb-2">Untapped Market Potential</h3>
                 <p className="text-muted-foreground">
-                  Millions of students across Africa represent a massive addressable market with minimal competition.
+                  Millions of students across Nigeria represent a massive addressable market with minimal competition.
                 </p>
               </div>
             </div>

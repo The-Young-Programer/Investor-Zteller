@@ -1,5 +1,7 @@
 "use client"
 
+import Image from "next/image"
+
 export function Footer() {
   return (
     <footer className="bg-card border-t border-border">
@@ -7,10 +9,13 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">Z</span>
-              </div>
-              <span className="font-bold">Zteller</span>
+              <Image 
+                src="/images/zteller-logo.png" 
+                alt="Zteller Logo" 
+                width={120} 
+                height={32} 
+                className="h-8 w-auto"
+              />
             </div>
             <p className="text-sm text-muted-foreground">Revolutionizing digital payments for student associations.</p>
           </div>

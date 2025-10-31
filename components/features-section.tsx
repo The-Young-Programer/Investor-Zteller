@@ -6,17 +6,17 @@ const features = [
   {
     icon: Zap,
     title: "Fast Transactions",
-    description: "Instant payment processing for student associations with minimal friction.",
+    description: "Instant payment processing for associations with minimal friction.",
   },
   {
     icon: TrendingUp,
     title: "Growing Market",
-    description: "Expanding across African universities with strong traction and adoption.",
+    description: "Expanding across Nigeria universities with strong traction and adoption.",
   },
   {
     icon: Shield,
     title: "Secure & Reliable",
-    description: "Enterprise-grade security protecting every transaction and user data.",
+    description: "5th level grade security protecting every transaction and user data.",
   },
 ]
 

@@ -11,18 +11,7 @@ import { db, storage } from "@/lib/firebase"
 import { collection, addDoc, Timestamp } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 
-const NIGERIAN_BANKS = [
-  "Access Bank",
-  "Guaranty Trust Bank (GTB)",
-  "First Bank",
-  "Zenith Bank",
-  "United Bank for Africa (UBA)",
-  "Stanbic IBTC",
-  "FCMB",
-  "Fidelity Bank",
-  "Wema Bank",
-  "Polaris Bank",
-]
+
 
 const INVESTMENT_AMOUNTS = [
   { label: "₦25,000", value: 25000 },
@@ -453,13 +442,13 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
             <h3 className="font-semibold mb-3">Zteller Business Account</h3>
             <div className="space-y-2 text-sm">
               <p>
-                <span className="font-medium">Bank:</span> Guaranty Trust Bank (GTB)
+                <span className="font-medium">Bank:</span> Moniepoint (MFB)
               </p>
               <p>
-                <span className="font-medium">Account Name:</span> Zteller Investments
+                <span className="font-medium">Account Name:</span> UNITY MYRA WILSON
               </p>
               <p>
-                <span className="font-medium">Account Number:</span> 0123456789
+                <span className="font-medium">Account Number:</span> 9122179405
               </p>
             </div>
           </div>

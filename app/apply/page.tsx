@@ -11,7 +11,7 @@ export default function ApplyPage() {
           <div className="max-w-2xl mx-auto mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Become an Investor</h1>
             <p className="text-lg text-muted-foreground">
-              Join our community of forward-thinking investors backing the future of digital payments.
+              Join our community of forward thinking investors backing the future of digital payments.
             </p>
           </div>
           <ApplicationForm />

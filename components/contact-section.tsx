@@ -15,14 +15,14 @@ export function ContactSection() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <a href="mailto:investors@zteller.com" className="flex items-center gap-2">
+              <a href="mailto:investors@zteller.ng" className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 Email Us
               </a>
             </Button>
             <Button asChild size="lg" variant="outline">
               <a
-                href="https://wa.me/2348000000000"
+                href="https://wa.me/2348156622466"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2"

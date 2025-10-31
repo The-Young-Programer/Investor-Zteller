@@ -26,18 +26,18 @@ export function HeroSection() {
             className="text-4xl md:text-6xl font-bold mb-6 text-balance leading-tight animate-fade-in"
             style={{ animationDelay: "0.1s" }}
           >
-            Invest in the future of{" "}
-            <span className="gradient-primary bg-clip-text text-transparent">digital payments</span> for student
+            Invest in the future of{" Zteller "}
+            <span className="gradient-primary bg-clip-text text-white">digital payments</span> for student
             associations
           </h1>
 
-          <p
+          {/* <p
             className="text-lg md:text-xl text-muted-foreground mb-8 text-balance max-w-2xl mx-auto animate-fade-in"
             style={{ animationDelay: "0.2s" }}
           >
             Join forward-thinking investors backing Zteller's mission to revolutionize payment solutions for student
             organizations across Africa.
-          </p>
+          </p> */}
 
           <div
             className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in"

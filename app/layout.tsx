@@ -18,7 +18,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Zteller - Invest in Digital Payments",
   description: "Invest in the future of digital payments for student associations",
-  generator: "v0.app",
+  generator: "nemonet",
+  icons: {
+    icon: "/images/zteller-favicon.png",
+    apple: "/images/zteller-favicon.png"
+  }
 }
 
 export default function RootLayout({

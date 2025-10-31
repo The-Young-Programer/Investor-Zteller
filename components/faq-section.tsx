@@ -13,11 +13,11 @@ const faqs = [
     answer:
       "You can choose investment durations of 3, 6, or 12 months. Your projected returns are calculated based on your investment amount and duration.",
   },
-  {
-    question: "How are returns calculated?",
-    answer:
-      "Returns are calculated using a monthly ROI of 3.5%. Your projected return = Investment Amount × (1 + (0.035 × Duration in Months)).",
-  },
+  // {
+  //   question: "How are returns calculated?",
+  //   answer:
+  //     "Returns are calculated using a monthly ROI of 3.5%. Your projected return = Investment Amount × (1 + (0.035 × Duration in Months)).",
+  // },
   {
     question: "How do I make my investment?",
     answer:
