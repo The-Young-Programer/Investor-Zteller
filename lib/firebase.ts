@@ -13,5 +13,5 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
-// Configure storage with custom domain to avoid CORS issues
-export const storage = getStorage(app, process.env.NEXT_PUBLIC_FIREBASE_STORAGE_URL)
+// Initialize storage without custom URL to avoid duplication issues
+export const storage = getStorage(app)
