@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ArrowRight, ArrowLeft, Upload } from "lucide-react"
-import { db, storage } from "@/lib/firebase"
+import { db } from "@/lib/firebase"
 import { collection, addDoc, Timestamp } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-
-
+import { logError, sanitizeErrorMessage } from "@/lib/error-handler"
 
 const INVESTMENT_AMOUNTS = [
   { label: "₦25,000", value: 25000 },
@@ -49,6 +47,7 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [roiAnimating, setRoiAnimating] = useState(false)
 
   const [formData, setFormData] = useState<FormData>({
@@ -65,7 +64,7 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     transactionReference: "",
   })
 
-  const monthlyROI = 0.035
+  const monthlyROI = 0.05
   const finalAmount = formData.investmentAmount || Number.parseInt(formData.customAmount) || 0
   const projectedReturn = finalAmount * (1 + monthlyROI * formData.duration)
 
@@ -83,62 +82,90 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
+      const file = e.target.files[0]
+      const maxSize = 1 * 1024 * 1024 // 1MB in bytes
+
+      if (file.size > maxSize) {
+        setFieldErrors(prev => ({
+          ...prev,
+          paymentScreenshot: "Image size must be less than 1MB. Please compress or choose a smaller image."
+        }))
+        return
+      }
+
+      setError("")
+      setFieldErrors(prev => ({
+        ...prev,
+        paymentScreenshot: ""
+      }))
       setFormData((prev) => ({
         ...prev,
-        paymentScreenshot: e.target.files![0],
+        paymentScreenshot: file,
       }))
     }
   }
 
   const validateStep = () => {
     setError("")
+    setFieldErrors({})
+    const newFieldErrors: Record<string, string> = {}
+    let isValid = true
 
     if (step === 1) {
       if (!formData.fullName.trim()) {
-        setError("Full name is required")
-        return false
+        newFieldErrors.fullName = "Full name is required"
+        isValid = false
       }
       if (!formData.phone.trim()) {
-        setError("Phone number is required")
-        return false
+        newFieldErrors.phone = "Phone number is required"
+        isValid = false
+      } else if (!validatePhone(formData.phone)) {
+        newFieldErrors.phone = "Please enter a valid phone number"
+        isValid = false
       }
       if (!formData.email.trim()) {
-        setError("Email is required")
-        return false
+        newFieldErrors.email = "Email is required"
+        isValid = false
+      } else if (!validateEmail(formData.email)) {
+        newFieldErrors.email = "Please enter a valid email address"
+        isValid = false
       }
       if (!formData.investmentAmount && !formData.customAmount) {
-        setError("Please select or enter an investment amount")
-        return false
+        newFieldErrors.investmentAmount = "Please select or enter an investment amount"
+        isValid = false
       }
     }
 
     if (step === 2) {
       if (!formData.accountName.trim()) {
-        setError("Account name is required")
-        return false
+        newFieldErrors.accountName = "Account name is required"
+        isValid = false
       }
       if (!formData.bankName) {
-        setError("Please select a bank")
-        return false
+        newFieldErrors.bankName = "Please select a bank"
+        isValid = false
       }
       if (!formData.accountNumber.trim()) {
-        setError("Account number is required")
-        return false
-      }
-      if (formData.accountNumber.length !== 10) {
-        setError("Account number must be 10 digits")
-        return false
+        newFieldErrors.accountNumber = "Account number is required"
+        isValid = false
+      } else if (!validateAccountNumber(formData.accountNumber)) {
+        newFieldErrors.accountNumber = "Account number must be 10 digits"
+        isValid = false
       }
     }
 
     if (step === 3) {
       if (!formData.paymentScreenshot) {
-        setError("Please upload payment proof")
-        return false
+        newFieldErrors.paymentScreenshot = "Please upload payment proof"
+        isValid = false
       }
     }
 
-    return true
+    setFieldErrors(newFieldErrors)
+    if (!isValid) {
+      setError("Please correct the errors below")
+    }
+    return isValid
   }
 
   const handleNext = () => {
@@ -152,70 +179,198 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
     setError("")
   }
 
+  // Input validation functions
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    // Basic phone validation - can be adjusted for specific country formats
+    return /^\+?[0-9]{10,15}$/.test(phone.replace(/\s+/g, ''));
+  };
+
+  const validateAccountNumber = (accountNumber: string): boolean => {
+    // Most account numbers are 10-12 digits
+    return /^[0-9]{10,12}$/.test(accountNumber.replace(/\s+/g, ''));
+  };
+
+  // Sanitize input to prevent XSS
+  const sanitizeInput = (input: string): string => {
+    if (!input) return '';
+    return input
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;')
+      .trim();
+  };
+
+  const validateFormData = (): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    // Required fields validation
+    if (!formData.fullName) errors.push("Full name is required");
+    if (!formData.email) errors.push("Email is required");
+    if (!formData.phone) errors.push("Phone number is required");
+    if (!formData.accountName) errors.push("Account name is required");
+    if (!formData.bankName) errors.push("Bank name is required");
+    if (!formData.accountNumber) errors.push("Account number is required");
+    
+    // Format validation
+    if (formData.email && !validateEmail(formData.email)) 
+      errors.push("Invalid email format");
+    if (formData.phone && !validatePhone(formData.phone)) 
+      errors.push("Invalid phone number format");
+    if (formData.accountNumber && !validateAccountNumber(formData.accountNumber)) 
+      errors.push("Invalid account number format");
+
+    // Investment amount validation
+    const amount = formData.investmentAmount || Number.parseInt(formData.customAmount || '0');
+    if (isNaN(amount) || amount <= 0) 
+      errors.push("Please enter a valid investment amount");
+
+    return { valid: errors.length === 0, errors };
+  };
+
   const handleSubmit = async () => {
     if (!validateStep()) return
 
-    setLoading(true)
-    setError("")
+    setLoading(true);
+    setError("");
 
     try {
-      let paymentScreenshotURL = ""
+      // Validate form data
+      const validation = validateFormData();
+      if (!validation.valid) {
+        setError(validation.errors.join(". "));
+        setLoading(false);
+        return;
+      }
+
+      let paymentScreenshotURL = "";
 
       if (formData.paymentScreenshot) {
-        // Clean the filename to prevent issues with special characters
-        const cleanFileName = formData.paymentScreenshot.name.replace(/[^\w.-]/g, '');
-        const storageRef = ref(storage, `payments/${Date.now()}-${cleanFileName}`)
-        await uploadBytes(storageRef, formData.paymentScreenshot)
-        paymentScreenshotURL = await getDownloadURL(storageRef)
+        try {
+          const maxSize = 1 * 1024 * 1024 // 1MB
+          if (formData.paymentScreenshot.size > maxSize) {
+            throw new Error("Image size must be less than 1MB. Please compress or choose a smaller image.")
+          }
+
+          const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+          if (!validTypes.includes(formData.paymentScreenshot.type)) {
+            throw new Error("Please upload a valid image file (JPG, PNG, GIF, or WEBP)")
+          }
+
+          paymentScreenshotURL = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            
+            // Set timeout to prevent hanging
+            const timeout = setTimeout(() => {
+              reader.abort();
+              reject(new Error("File reading timed out. Please try again with a smaller image."));
+            }, 30000);
+            
+            reader.onloadend = () => {
+              clearTimeout(timeout);
+              const result = reader.result as string
+              // Double check the base64 string size
+              if (result.length > 1048487) {
+                reject(new Error("Image is too large even after validation. Please use a smaller image."))
+              } else {
+                resolve(result)
+              }
+            }
+            reader.onerror = () => {
+              clearTimeout(timeout);
+              reject(new Error("Failed to read image file"))
+            }
+            reader.readAsDataURL(formData.paymentScreenshot!)
+          })
+
+          console.log("[v0] Image converted to base64, size:", paymentScreenshotURL.length, "bytes")
+        } catch (uploadError: any) {
+          console.error("[v0] File processing error:", uploadError)
+          throw new Error(uploadError.message || "Failed to process payment proof. Please try again.")
+        }
       }
+
+      // Sanitize text inputs
+      const sanitizedData = {
+        fullName: sanitizeInput(formData.fullName),
+        phone: sanitizeInput(formData.phone),
+        email: sanitizeInput(formData.email),
+        accountName: sanitizeInput(formData.accountName),
+        bankName: sanitizeInput(formData.bankName),
+        accountNumber: sanitizeInput(formData.accountNumber),
+        transactionReference: sanitizeInput(formData.transactionReference || ''),
+      };
 
       const investmentAmount = formData.investmentAmount || Number.parseInt(formData.customAmount)
 
+      console.log("[v0] Saving to Firestore...")
       const docRef = await addDoc(collection(db, "investors"), {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
+        fullName: sanitizedData.fullName,
+        phone: sanitizedData.phone,
+        email: sanitizedData.email,
         investmentAmount,
         duration: formData.duration,
         projectedReturn: Math.round(projectedReturn),
-        accountName: formData.accountName,
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
+        accountName: sanitizedData.accountName,
+        bankName: sanitizedData.bankName,
+        accountNumber: sanitizedData.accountNumber,
         paymentScreenshotURL,
-        transactionReference: formData.transactionReference,
+        transactionReference: sanitizedData.transactionReference,
         status: "pending",
         createdAt: Timestamp.now(),
       })
 
-      console.log("Investment application submitted:", docRef.id)
+      console.log("[v0] Investment application submitted:", docRef.id)
 
       try {
-        await fetch("/api/send-admin-notification", {
+        const response = await fetch("/api/send-admin-notification", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            fullName: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
+            fullName: sanitizedData.fullName,
+            email: sanitizedData.email,
+            phone: sanitizedData.phone,
             investmentAmount,
             duration: formData.duration,
             projectedReturn: Math.round(projectedReturn),
-            bankName: formData.bankName,
-            accountNumber: formData.accountNumber,
+            bankName: sanitizedData.bankName,
+            accountNumber: sanitizedData.accountNumber,
             paymentScreenshotURL,
-            transactionReference: formData.transactionReference,
+            transactionReference: sanitizedData.transactionReference,
             applicationId: docRef.id,
           }),
         })
+        
+        // Check if the response is ok
+        if (!response.ok) {
+          const errorText = await response.text();
+          try {
+            // Try to parse as JSON
+            const errorJson = JSON.parse(errorText);
+            console.warn("Admin notification API returned an error:", errorJson);
+          } catch (parseError) {
+            // If not JSON, log as text
+            console.warn("Admin notification API returned a non-JSON response:", errorText.substring(0, 200));
+          }
+          // We continue anyway since the application is saved
+        }
       } catch (emailError) {
         console.error("Error sending admin notification:", emailError)
+        // We continue anyway since the application is saved
       }
 
-      setStep(5) // Success step
+      setStep(5)
       onSuccess?.()
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error submitting application:", err)
-      setError("Failed to submit application. Please try again.")
+      logError(err, "Application Form Submission")
+      setError(sanitizeErrorMessage(err) || "Failed to submit application. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -265,8 +420,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                 value={formData.fullName}
                 onChange={handleInputChange}
                 placeholder="John Doe"
-                className="w-full"
+                className={`w-full ${fieldErrors.fullName ? 'border-red-500' : ''}`}
               />
+              {fieldErrors.fullName && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.fullName}</p>
+              )}
             </div>
 
             <div>
@@ -276,8 +434,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="+234 800 000 0000"
-                className="w-full"
+                className={`w-full ${fieldErrors.phone ? 'border-red-500' : ''}`}
               />
+              {fieldErrors.phone && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.phone}</p>
+              )}
             </div>
 
             <div>
@@ -288,8 +449,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="john@example.com"
-                className="w-full"
+                className={`w-full ${fieldErrors.email ? 'border-red-500' : ''}`}
               />
+              {fieldErrors.email && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div>
@@ -325,8 +489,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                     setFormData((prev) => ({ ...prev, customAmount: e.target.value, investmentAmount: 0 }))
                   }}
                   placeholder="Enter custom amount"
-                  className="w-full"
+                  className={`w-full ${fieldErrors.investmentAmount ? 'border-red-500' : ''}`}
                 />
+                {fieldErrors.investmentAmount && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.investmentAmount}</p>
+                )}
               </div>
             </div>
 
@@ -359,7 +526,7 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                   roiAnimating ? "scale-105 opacity-100" : "scale-100 opacity-100"
                 }`}
               >
-                <p className="text-sm text-muted-foreground mb-1">Projected Return (3.5% monthly)</p>
+                <p className="text-sm text-muted-foreground mb-1">Projected Return (5% monthly)</p>
                 <p
                   className={`text-2xl font-bold text-secondary transition-all duration-600 ${
                     roiAnimating ? "scale-110" : "scale-100"
@@ -394,8 +561,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                 value={formData.accountName}
                 onChange={handleInputChange}
                 placeholder="Your account name"
-                className="w-full"
+                className={`w-full ${fieldErrors.accountName ? 'border-red-500' : ''}`}
               />
+              {fieldErrors.accountName && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.accountName}</p>
+              )}
             </div>
 
             <div>
@@ -405,8 +575,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                 value={formData.bankName}
                 onChange={handleInputChange}
                 placeholder="Enter your bank name"
-                className="w-full"
+                className={`w-full ${fieldErrors.bankName ? 'border-red-500' : ''}`}
               />
+              {fieldErrors.bankName && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.bankName}</p>
+              )}
             </div>
 
             <div>
@@ -417,8 +590,11 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                 onChange={handleInputChange}
                 placeholder="0123456789"
                 maxLength={10}
-                className="w-full"
+                className={`w-full ${fieldErrors.accountNumber ? 'border-red-500' : ''}`}
               />
+              {fieldErrors.accountNumber && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.accountNumber}</p>
+              )}
             </div>
           </div>
 
@@ -464,7 +640,7 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-3">Payment Screenshot</label>
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-smooth cursor-pointer">
+              <div className={`border-2 border-dashed ${fieldErrors.paymentScreenshot ? 'border-red-500' : 'border-border'} rounded-lg p-8 text-center hover:border-primary/50 transition-smooth cursor-pointer`}>
                 <input
                   type="file"
                   accept="image/*"
@@ -473,12 +649,15 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
                   id="payment-upload"
                 />
                 <label htmlFor="payment-upload" className="cursor-pointer">
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                  <Upload className={`w-8 h-8 mx-auto mb-2 ${fieldErrors.paymentScreenshot ? 'text-red-500' : 'text-muted-foreground'}`} />
                   <p className="font-medium mb-1">
                     {formData.paymentScreenshot ? formData.paymentScreenshot.name : "Click to upload or drag and drop"}
                   </p>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 1MB</p>
                 </label>
+                {fieldErrors.paymentScreenshot && (
+                  <p className="text-red-500 text-sm mt-2">{fieldErrors.paymentScreenshot}</p>
+                )}
               </div>
             </div>
 
@@ -548,7 +727,7 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
               </div>
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">Account Number</p>
-                <p className="font-semibold">****{formData.accountNumber.slice(-4)}</p>
+                <p className="font-semibold">{formData.accountNumber}</p>
               </div>
             </div>
 
