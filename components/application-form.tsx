@@ -162,7 +162,9 @@ export function ApplicationForm({ onSuccess }: ApplicationFormProps) {
       let paymentScreenshotURL = ""
 
       if (formData.paymentScreenshot) {
-        const storageRef = ref(storage, `payments/${Date.now()}-${formData.paymentScreenshot.name}`)
+        // Clean the filename to prevent issues with special characters
+        const cleanFileName = formData.paymentScreenshot.name.replace(/[^\w.-]/g, '');
+        const storageRef = ref(storage, `payments/${Date.now()}-${cleanFileName}`)
         await uploadBytes(storageRef, formData.paymentScreenshot)
         paymentScreenshotURL = await getDownloadURL(storageRef)
       }

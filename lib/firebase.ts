@@ -15,3 +15,8 @@ const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
 // Initialize storage without custom URL to avoid duplication issues
 export const storage = getStorage(app)
+
+
+
+
+
